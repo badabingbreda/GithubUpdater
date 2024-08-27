@@ -1,0 +1,19 @@
+{
+    "name": "badabingbreda/githubupdater",
+    "keywords": ["wordpress" , "plugin" , "update" , "versioning" ],
+    "description": "Update your github hosted plugins with ease",
+    "type": "library",
+    "license": [
+        "MIT"
+    ],    
+    "authors": [
+        {
+            "name": "badabingbreda",
+            "email": "didou@badabing.nl"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "BadabingBreda\\": "" }
+    },    
+    "require": {}
+}
