@@ -24,3 +24,29 @@ Make sure to use the correct release format to indicate that there's an update. 
     2.4.9
 
 Are all good versions.
+
+## Using the updater
+
+First course of action is to create a release for your plugin on Github. You can draft a release, add a tag '1.0.0' and confirm.
+
+Add the class via Composer from within your plugin's directory:
+
+    composer require badabingbreda/githubupdater
+
+Make sure to include the autoload in your main plugin file.
+
+    // load our Composer autoload
+    require_once( 'vendor/autoload.php' );
+
+
+
+In your plugin add the following:
+
+    $github_updater = new \BadabingBreda\GithubUpdater(__FILE__);
+    $github_updater->set_username('yourusername');
+    $github_updater->set_repository('repository-slug');
+    $github_updater->set_settings([
+                        'requires' => '7.4',
+                        'tested'   => '6.3',
+                    ]);
+    $github_updater->initialize();
