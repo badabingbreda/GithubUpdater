@@ -26,18 +26,46 @@ class GithubUpdater {
 
 	private $plugin_settings;
 
+
 	/**
-	 * __constructor for the class
-	 * @param [type] $file [description]
+	 * GithubUpdater constructor.
+	 *
+	 * @param string $file
+	 * @param string $username
+	 * @param string $repository
+	 * @param string $authorize_token
+	 *
+	 * @return GithubUpdater
 	 */
-	public function __construct( $file ) {
+	public function __construct( $file , $username = false , $repository = false , $authorize_token = false ) {
 		$this->file = $file;
+
+		if ( $username ) {
+			$this->set_username( $username );	
+		}
+
+		if ( $repository ) {
+			$this->set_repository( $repository );
+		}
+
+		if ( $authorize_token ) {
+			$this->authorize( $authorize_token );
+		}
+
 		add_action( 'admin_init', array( $this, 'set_plugin_properties' ) );
 		return $this;
 	}
 
 	/**
-	 * [set_plugin_properties description]
+	 * Set the plugin properties after the plugin row has been loaded.
+	 *
+	 * The plugin properties are set after the plugin row has been loaded
+	 * because the plugin basename is required to determine if the plugin is
+	 * active. This is the earliest point in the WordPress loading process
+	 * where the basename is known.
+	 *
+	 * @since 1.0
+	 * @access public
 	 */
 	public function set_plugin_properties() {
 		$this->plugin	= get_plugin_data( $this->file );
@@ -45,17 +73,46 @@ class GithubUpdater {
 		$this->active	= is_plugin_active( $this->basename );
 	}
 
+
 	/**
-	 * [set_username description]
-	 * @param [type] $username [description]
+	 * Set the GitHub username.
+	 *
+	 * @since 1.0
+	 * @access public
+	 * @param string $username The GitHub username.
 	 */
 	public function set_username( $username ) {
 		$this->username = $username;
 	}
 
 	/**
-	 * [set_settings description]
-	 * @param [type] $settings [description]
+	 * Set the plugin settings.
+	 *
+	 * The plugin settings are used to filter the list of plugins on the WordPress
+	 * Plugin Directory. The settings that can be set are as follows:
+	 *
+	 * - requires: The minimum version of WordPress that the plugin requires.
+	 * - tested: The highest version of WordPress that the plugin has been tested with.
+	 * - rating: The rating of the plugin on a scale of 1 to 100.
+	 * - num_ratings: The number of ratings the plugin has received.
+	 * - downloaded: The number of times the plugin has been downloaded.
+	 * - added: The date the plugin was added to the directory.
+	 * - banners: An array of banner images to display on the plugin's page on the
+	 *   WordPress Plugin Directory.
+	 *
+	 * If any of the settings are not set, the following defaults will be used:
+	 *
+	 * - requires: 5.4
+	 * - tested: 6.3
+	 * - rating: 100.0
+	 * - num_ratings: 10
+	 * - downloaded: 10
+	 * - added: 2023-10-03
+	 * - banners: false
+	 *
+	 * @since 1.0
+	 * @access public
+	 * @param array $settings An associative array of settings to set.
 	 */
 	public function set_settings( $settings ) {
 
@@ -64,8 +121,8 @@ class GithubUpdater {
 			'requires'			=> '5.4',
 			'tested'			=> '6.3',
 			'rating'			=> '100.0',
-			'num_ratings'			=> '10',
-			'downloaded'			=> '10',
+			'num_ratings'		=> '10',
+			'downloaded'		=> '10',
 			'added'				=> '2023-10-03',
 			'banners'			=> false,
 		);
@@ -76,25 +133,44 @@ class GithubUpdater {
 	}
 
 	/**
-	 * [set_repository description]
-	 * @param [type] $repository [description]
+	 * Set the repository slug
+	 *
+	 * The repository slug is used to create the URL that is used to fetch the
+	 * plugin's data from Github. The slug should be in the format of
+	 * `username/repository`.
+	 *
+	 * @since 1.0
+	 * @access public
+	 * @param string $repository The repository slug.
 	 */
 	public function set_repository( $repository ) {
 		$this->repository = $repository;
 	}
 
 	/**
-	 * [authorize description]
-	 * @param  [type] $token [description]
-	 * @return [type]        [description]
+	 * Authorize the plugin to access the Github API on your behalf.
+	 *
+	 * The authorization token is used to access the Github API on your behalf.
+	 * The token should be in the format of a Github personal access token.
+	 *
+	 * @since 1.0
+	 * @access public
+	 * @param string $token The Github personal access token.
 	 */
 	public function authorize( $token ) {
 		$this->authorize_token = $token;
 	}
 
+
 	/**
-	 * [get_repository_info description]
-	 * @return [type] [description]
+	 * Get repository information from Github
+	 *
+	 * This method fetches the information of the plugin from Github and stores
+	 * it in the class property github_response.
+	 *
+	 * @since 1.0
+	 * @access private
+	 * @return array The repository information.
 	 */
 	private function get_repository_info() {
 
@@ -138,8 +214,10 @@ class GithubUpdater {
 	}
 
 	/**
-	 * [initialize description]
-	 * @return [type] [description]
+	 * Initialize the class and add our filters and actions
+	 *
+	 * @since 1.0
+	 * @access public
 	 */
 	public function initialize() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'modify_transient' ), 10, 1 );
@@ -148,65 +226,67 @@ class GithubUpdater {
 	}
 
 	/**
-	 * [modify_transient description]
-	 * @param  [type] $transient [description]
-	 * @return [type]            [description]
+	 * Modify the transient response to include our plugin's info.
+	 *
+	 * If the plugin is out of date, modify the transient to include the new
+	 * version's information.
+	 *
+	 * @since 1.0
+	 * @access public
+	 * @param object $transient The transient response object.
+	 * @return object The modified transient response object.
 	 */
 	public function modify_transient( $transient ) {
 
-		// Check if transient has a checked property
-		if ( property_exists( $transient, 'checked') ) {
+		if ( empty( $trainsient->checked )) return $transient;
 
-		 	// Did Wordpress check for updates?
-			if ( $checked = $transient->checked ) {
+		// Get the repo info
+		$this->get_repository_info();
 
-				// return early if our plugin hasn't been checked
-				if( !isset( $checked[ $this->basename ] ) ) return $transient;
+		// Check if we're out of date
+		$out_of_date = version_compare( $this->github_response['tag_name'], $checked[ $this->basename ], 'gt' );
 
-				// Get the repo info
-				$this->get_repository_info();
+		if( $out_of_date ) {
 
-				// Check if we're out of date
-				$out_of_date = version_compare( $this->github_response['tag_name'], $checked[ $this->basename ], 'gt' );
-				if( $out_of_date ) {
+			// Get the ZIP
+			$new_files = $this->github_response['zipball_url'];
 
-					// Get the ZIP
-					$new_files = $this->github_response['zipball_url'];
+			// Create valid slug
+			$slug = current( explode('/', $this->basename ) );
 
-					// Create valid slug
-					$slug = current( explode('/', $this->basename ) );
+			// setup our plugin info
+			$plugin = array(
+				'url' => $this->plugin["PluginURI"],
+				'slug' => $slug,
+				'package' => $new_files,
+				'tested' => $this->github_response['tested'],
+				'icons' => $this->github_response['icons'],
+				'banners' => $this->github_response['banners'],
+				'banners_rtl' => [],
+				'requires_php' => $this->github_response['requires_php'],
+				'new_version' => $this->github_response['tag_name'],
+			);
 
-					// setup our plugin info
-					$plugin = array(
-						'url' => $this->plugin["PluginURI"],
-						'slug' => $slug,
-						'package' => $new_files,
-						'tested' => $this->github_response['tested'],
-						'icons' => $this->github_response['icons'],
-						'banners' => $this->github_response['banners'],
-						'banners_rtl' => [],
-						'requires_php' => $this->github_response['requires_php'],
-						'new_version' => $this->github_response['tag_name'],
-					);
-
-					// Return it in response
-					$transient->response[$this->basename] = (object) $plugin;
-				}
-			}
+			// Return it in response
+			$transient->response[$this->basename] = (object) $plugin;
 		}
 		
 		// Return filtered transient
 		return $transient;
 	}
 
+
 	/**
-	 * get_tmpfile_data
-	 * 
-	 * takes a string, creates a temp file and tries to get meta data from the tmp file
-	 * since I couldn't find a function that does what I wanted
+	 * Get data from a github release text file
 	 *
-	 * @param  mixed $string
-	 * @return void
+	 * This method takes a string from a github release text file and returns
+	 * an associative array with the data from it.
+	 *
+	 * @since 4.0
+	 * @access private
+	 *
+	 * @param string $string The text file contents.
+	 * @return array The associative array with the data.
 	 */
 	private function get_tmpfile_data( $string ) {
 
@@ -230,6 +310,14 @@ class GithubUpdater {
 				'icons' => 'Icons',
 				'banners' => 'Banners',
 				'requires_php' => 'RequiresPHP',
+				'name' => 'Name',
+				'rating' => 'Rating',
+				'num_ratings' => 'NumRatings',
+				'downloaded' => 'Downloaded',
+				'description' => 'Description',
+				'author' => 'Author',
+				'author_profile' => 'AuthorProfile',
+				'homepage' => 'Homepage',
             ]
         );
 
@@ -265,6 +353,14 @@ class GithubUpdater {
 		$data = [
             'tested' => $file_headers[ 'tested' ],
             'requires_php' => $file_headers[ 'requires_php' ],
+			'name' => $file_headers[ 'name' ],
+			'rating' => $file_headers[ 'rating' ],
+			'num_ratings' => $file_headers[ 'num_ratings' ],
+			'downloaded' => $file_headers[ 'downloaded' ],
+			'description' => $file_headers[ 'description' ],
+			'author' => $file_headers[ 'author' ],
+			'author_profile' => $file_headers[ 'author_profile' ],
+			'homepage' => $file_headers[ 'homepage' ],
             'icons' => $icons,
             'banners' => $banners,
 			'updates' => $updates,
@@ -281,11 +377,13 @@ class GithubUpdater {
 	}
 
 	/**
-	 * [plugin_popup description]
-	 * @param  [type] $result [description]
-	 * @param  [type] $action [description]
-	 * @param  [type] $args   [description]
-	 * @return [type]         [description]
+	 * Hook into the plugin popup on the WordPress plugins page.
+	 *
+	 * @param object $result The result object passed to the filter.
+	 * @param string $action The current action being performed.
+	 * @param object $args The current plugin information.
+	 *
+	 * @return object The modified result object.
 	 */
 	public function plugin_popup( $result, $action, $args ) {
 
@@ -302,6 +400,7 @@ class GithubUpdater {
 					'name'				=> $this->plugin["Name"],
 					'slug'				=> $this->basename,
 					'version'			=> $this->github_response['tag_name'],
+					'new_version'		=> $this->github_response['tag_name'],
 					'author'			=> $this->plugin["AuthorName"],
 					'author_profile'	=> $this->plugin["AuthorURI"],
 					'last_updated'		=> $this->github_response['published_at'],
@@ -311,6 +410,7 @@ class GithubUpdater {
 						'Description'	=> $this->plugin["Description"],
 						'Updates'		=> $this->github_response['updates'],
 					),
+					'icons'				=> $this->github_response[ 'icons' ],
 					'banners'			=> $this->github_response[ 'banners' ],
 					'download_link'		=> $this->github_response['zipball_url']
 				);
@@ -327,11 +427,13 @@ class GithubUpdater {
 	}
 
 	/**
-	 * [after_install description]
-	 * @param  [type] $response   [description]
-	 * @param  [type] $hook_extra [description]
-	 * @param  [type] $result     [description]
-	 * @return [type]             [description]
+	 * Move the plugin files to the correct directory after installation.
+	 *
+	 * @param object $response The update response object.
+	 * @param string $hook_extra The hook extra for the action.
+	 * @param array  $result The result of the installation.
+	 *
+	 * @return array The installation result, modified to include the correct destination.
 	 */
 	public function after_install( $response, $hook_extra, $result ) {
 

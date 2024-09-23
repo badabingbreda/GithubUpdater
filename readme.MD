@@ -8,7 +8,7 @@ You can add custom headers to your plugin to make it look a little nicer. Add th
 
     Tested: 6.3
     Icons: 1x|https://domainname.com/icon-256x256.png?rev=2818463,2x|https://domainname.com/icon-256x256.png?rev=2818463
-    Banners: 1x|https://domainname.com/banner-720x250.png
+    Banners: low|https://domainname.com/banner-720x250.png,high|https://domainname.com/banner-1440x500.png
     RequiresPHP: 7.0
 
     |||
@@ -42,11 +42,13 @@ Make sure to include the autoload in your main plugin file.
 
 In your plugin add the following:
 
-    $github_updater = new \BadabingBreda\GithubUpdater(__FILE__);
-    $github_updater->set_username('yourusername');
-    $github_updater->set_repository('repository-slug');
+    $github_updater = new \BadabingBreda\GithubUpdater(__FILE__ , 'yourusername' , 'repository-slug' );
     $github_updater->set_settings([
                         'requires' => '7.4',
                         'tested'   => '6.3',
                     ]);
     $github_updater->initialize();
+
+or, when you accept the default settings:
+
+    $githubupdater = (new \BadabingBreda\GithubUpdater( __FILE__ , 'yourusername' , 'repository-slug' ))->initialize();
